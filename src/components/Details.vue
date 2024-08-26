@@ -33,7 +33,9 @@ const backToList = () => {
         >
           {{ details.data?.name }}
         </h2>
-        <ul>
+        <ul
+          class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400"
+        >
           <li>
             place of publication: {{ details.data?.place_of_publication }}
           </li>
@@ -42,6 +44,14 @@ const backToList = () => {
           <li>publisher: {{ details.data?.publisher }}</li>
           <li>frequency: {{ details.data?.frequency }}</li>
           <li>language: {{ details.data?.language }}</li>
+          <li v-if="details.data?.subject?.length">
+            subjects:
+            <ol class="ps-5 mt-2 space-y-1 list-decimal list-inside">
+              <li v-for="(item, idx) in details.data.subject" :key="idx">
+                {{ item }}
+              </li>
+            </ol>
+          </li>
         </ul>
         <button
           type="button"
