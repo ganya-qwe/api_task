@@ -1,11 +1,10 @@
 <script setup>
-import axios from "axios";
 import { ref } from "vue";
 import Spinner from "@/components/Spinner.vue";
 import Pagination from "@/components/Pagination.vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
+import { search } from "@/service/api.js";
 
-const route = useRoute();
 const router = useRouter();
 const searchInput = defineModel();
 let searchResults = ref({});
@@ -18,23 +17,25 @@ let pagination = ref({
 });
 let loading = ref(false);
 const makePagination = (page) => {
-  pagination.value.startIndex = searchResults.value.data.startIndex;
-  pagination.value.endIndex = searchResults.value.data.endIndex;
+  pagination.value.startIndex = searchResults.value.startIndex;
+  pagination.value.endIndex = searchResults.value.endIndex;
   pagination.value.currentPage = page ?? 1;
   pagination.value.totalPages = Math.ceil(
-    searchResults.value.data.totalItems / pagination.value.perPage,
+    searchResults.value.totalItems / pagination.value.perPage,
   );
 };
-const search = async (page = null) => {
+const searchList = async (page = null) => {
   searchResults.value = {};
   loading.value = true;
-  searchResults.value = await axios.get(
-    page
-      ? `https://chroniclingamerica.loc.gov/search/titles/results/?terms=${searchInput.value}&format=json&page=${page}`
-      : `https://chroniclingamerica.loc.gov/search/titles/results/?terms=${searchInput.value}&format=json`,
-  );
-  makePagination(page);
-  loading.value = false;
+  try {
+    searchResults.value = page
+      ? await search(searchInput.value, page)
+      : await search(searchInput.value);
+    makePagination(page);
+    loading.value = false;
+  } catch (e) {
+    loading.value = false;
+  }
 };
 
 const getDetails = (lccn) => {
@@ -44,7 +45,7 @@ const getDetails = (lccn) => {
 
 <template>
   <div class="flex flex-col">
-    <form class="min-w-[400px] mx-auto my-3" @submit.prevent="search()">
+    <form class="min-w-[400px] mx-auto my-3" @submit.prevent="searchList()">
       <label
         for="default-search"
         class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
@@ -92,12 +93,9 @@ const getDetails = (lccn) => {
       :current-page="pagination.currentPage"
       :total-pages="pagination.totalPages"
       :is-loading="loading"
-      @page="search($event)"
+      @page="searchList($event)"
     />
-    <div
-      v-if="searchResults?.data?.items?.length"
-      class="relative overflow-x-auto"
-    >
+    <div v-if="searchResults?.items?.length" class="relative overflow-x-auto">
       <table
         class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400"
       >
@@ -115,7 +113,7 @@ const getDetails = (lccn) => {
         </thead>
         <tbody>
           <tr
-            v-for="item in searchResults?.data?.items"
+            v-for="item in searchResults?.items"
             :key="item.id"
             class="cursor-pointer hover:bg-gray-300 bg-white border-b dark:bg-gray-800 dark:border-gray-700"
             @click="getDetails(item.lccn)"
@@ -146,7 +144,7 @@ const getDetails = (lccn) => {
       </table>
     </div>
     <div
-      v-else-if="searchResults?.data?.items?.length === 0"
+      v-else-if="searchResults?.items?.length === 0"
       class="text-white text-center"
     >
       No results found

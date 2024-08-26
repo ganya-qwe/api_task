@@ -1,8 +1,8 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 import Spinner from "@/components/Spinner.vue";
+import { getDetails } from "@/service/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -10,9 +10,7 @@ let loading = ref(false);
 let details = ref({});
 onMounted(async () => {
   loading.value = true;
-  details.value = await axios.get(
-    `https://chroniclingamerica.loc.gov/lccn/${route.params.lccn}.json`,
-  );
+  details.value = await getDetails(route.params.lccn);
   loading.value = false;
 });
 
@@ -31,23 +29,21 @@ const backToList = () => {
         <h2
           class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
         >
-          {{ details.data?.name }}
+          {{ details.name }}
         </h2>
         <ul
           class="max-w-md space-y-1 text-gray-500 list-disc list-inside dark:text-gray-400"
         >
-          <li>
-            place of publication: {{ details.data?.place_of_publication }}
-          </li>
-          <li>start year: {{ details.data?.start_year }}</li>
-          <li>end year: {{ details.data?.end_year }}</li>
-          <li>publisher: {{ details.data?.publisher }}</li>
-          <li>frequency: {{ details.data?.frequency }}</li>
-          <li>language: {{ details.data?.language }}</li>
-          <li v-if="details.data?.subject?.length">
+          <li>place of publication: {{ details.place_of_publication }}</li>
+          <li>start year: {{ details.start_year }}</li>
+          <li>end year: {{ details.end_year }}</li>
+          <li>publisher: {{ details.publisher }}</li>
+          <li>frequency: {{ details.frequency }}</li>
+          <li>language: {{ details.language }}</li>
+          <li v-if="details.subject?.length">
             subjects:
             <ol class="ps-5 mt-2 space-y-1 list-decimal list-inside">
-              <li v-for="(item, idx) in details.data.subject" :key="idx">
+              <li v-for="(item, idx) in details.subject" :key="idx">
                 {{ item }}
               </li>
             </ol>
